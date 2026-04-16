@@ -1,0 +1,3 @@
+tui_bug_tracker_controllers:
+    resource: '../../Controller/'
+    type: attribute

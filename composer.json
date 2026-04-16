@@ -1,0 +1,22 @@
+{
+    "name": "tuimedia/bug-tracker-client-bundle",
+    "description": "Symfony bundle for consumer projects to submit bug reports to the Tui bug tracker",
+    "type": "symfony-bundle",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.3",
+        "symfony/framework-bundle": "^7.0",
+        "symfony/http-client": "^7.0",
+        "symfony/security-bundle": "^7.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Tui\\BugTrackerBundle\\": "src/"
+        }
+    },
+    "extra": {
+        "symfony": {
+            "allow-contrib": false
+        }
+    }
+}

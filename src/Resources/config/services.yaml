@@ -1,0 +1,9 @@
+services:
+    Tui\BugTrackerBundle\Client\BugTrackerClient:
+        arguments:
+            $httpClient: '@http_client'
+            # $baseUrl and $apiKey are injected by TuiBugTrackerExtension from bundle config
+
+    Tui\BugTrackerBundle\Controller\FeedbackController:
+        tags: ['controller.service_arguments']
+        public: true
