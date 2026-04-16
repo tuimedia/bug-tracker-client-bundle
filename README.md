@@ -17,6 +17,31 @@ Browser → POST /api/feedback/tickets
 
 ## Installation
 
+### With Symfony Flex (Flex 2.x, recommended)
+
+Add the bundle's recipe endpoint to your project's `composer.json` before requiring:
+
+```json
+"extra": {
+    "symfony": {
+        "endpoint": [
+            "github://tuimedia/bug-tracker-client-bundle:main",
+            "flex://defaults"
+        ]
+    }
+}
+```
+
+Then:
+
+```bash
+composer require tuimedia/bug-tracker-client-bundle
+```
+
+Flex will automatically register the bundle, create `config/packages/tui_bug_tracker.yaml`, `config/routes/tui_bug_tracker.yaml`, and add the env vars to `.env`.
+
+### Without Flex (or Flex 1.x)
+
 ```bash
 composer require tuimedia/bug-tracker-client-bundle
 ```
