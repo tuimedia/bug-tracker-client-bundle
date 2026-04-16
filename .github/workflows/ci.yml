@@ -6,12 +6,13 @@ on:
 
 jobs:
   tests:
-    name: PHP ${{ matrix.php }}
+    name: PHP ${{ matrix.php }} / Symfony ${{ matrix.symfony }}
     runs-on: ubuntu-latest
     if: github.repository == 'tuimedia/bug-tracker-client-bundle'
     strategy:
       matrix:
         php: ['8.3', '8.4']
+        symfony: ['6.4.*', '7.*']
 
     steps:
       - uses: actions/checkout@v6
@@ -22,8 +23,15 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: none
 
+      - name: Install Flex globally
+        run: |
+          composer global config --no-plugins allow-plugins.symfony/flex true
+          composer global require --no-progress --no-scripts --no-plugins symfony/flex
+
       - name: Install dependencies
-        run: composer install --no-progress --prefer-dist
+        run: composer update --no-progress --prefer-dist
+        env:
+          SYMFONY_REQUIRE: ${{ matrix.symfony }}
 
       - name: Run tests
         run: vendor/bin/phpunit

@@ -72,7 +72,7 @@ The prefix is set at import time — no bundle config needed.
 ## Requirements
 
 - PHP 8.3+
-- Symfony 7.x
+- Symfony 6.4 or 7.x
 
 ## Running tests
 
