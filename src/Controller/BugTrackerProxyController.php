@@ -2,23 +2,29 @@
 
 namespace Tui\BugTrackerBundle\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-class BugTrackerProxyController extends AbstractController
+class BugTrackerProxyController
 {
     public function __construct(
         private readonly HttpClientInterface $client,
         private readonly string $requiredRole,
+        private readonly AuthorizationCheckerInterface $authorizationChecker,
+        private readonly TokenStorageInterface $tokenStorage,
     ) {
     }
 
     public function proxy(string $path, Request $request): JsonResponse
     {
-        $this->denyAccessUnlessGranted($this->requiredRole);
+        if (!$this->authorizationChecker->isGranted($this->requiredRole)) {
+            throw new AccessDeniedException();
+        }
 
         $options = ['query' => $request->query->all()];
 
@@ -32,7 +38,7 @@ class BugTrackerProxyController extends AbstractController
             // Only override reporterEmail if the caller sent it — prevents spoofing
             // without injecting the field into endpoints that don't expect it.
             if (array_key_exists('reporterEmail', $payload)) {
-                $payload['reporterEmail'] = $this->getUser()->getUserIdentifier();
+                $payload['reporterEmail'] = $this->tokenStorage->getToken()?->getUser()?->getUserIdentifier();
             }
 
             $options['json'] = $payload;

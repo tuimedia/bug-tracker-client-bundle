@@ -1,7 +1,9 @@
 services:
     Tui\BugTrackerBundle\Controller\BugTrackerProxyController:
-        tags:
-            - 'controller.service_arguments'
-            - 'container.service_subscriber'
+        tags: ['controller.service_arguments']
         public: true
         # $client and $requiredRole are injected by TuiBugTrackerExtension from bundle config
+        # $authorizationChecker and $tokenStorage are wired below
+        arguments:
+            $authorizationChecker: '@security.authorization_checker'
+            $tokenStorage: '@security.token_storage'

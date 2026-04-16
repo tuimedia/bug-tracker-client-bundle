@@ -3,7 +3,6 @@
 namespace Tui\BugTrackerBundle\Tests\Controller;
 
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -34,17 +33,7 @@ class BugTrackerProxyControllerTest extends TestCase
         $authChecker = $this->createMock(AuthorizationCheckerInterface::class);
         $authChecker->method('isGranted')->willReturn($isGranted);
 
-        $container = $this->createMock(ContainerInterface::class);
-        $container->method('has')->willReturn(true);
-        $container->method('get')->willReturnMap([
-            ['security.authorization_checker', $authChecker],
-            ['security.token_storage', $tokenStorage],
-        ]);
-
-        $controller = new BugTrackerProxyController($httpClient, $role);
-        $controller->setContainer($container);
-
-        return $controller;
+        return new BugTrackerProxyController($httpClient, $role, $authChecker, $tokenStorage);
     }
 
     public function testPostStripsAndInjectsReporterEmail(): void
@@ -202,16 +191,8 @@ class BugTrackerProxyControllerTest extends TestCase
             ->with('ROLE_CUSTOM')
             ->willReturn(true);
 
-        $container = $this->createMock(ContainerInterface::class);
-        $container->method('has')->willReturn(true);
-        $container->method('get')->willReturnMap([
-            ['security.authorization_checker', $authChecker],
-            ['security.token_storage', $tokenStorage],
-        ]);
-
         $httpClient = new MockHttpClient([new MockResponse('{}', ['http_code' => 200])]);
-        $controller = new BugTrackerProxyController($httpClient, 'ROLE_CUSTOM');
-        $controller->setContainer($container);
+        $controller = new BugTrackerProxyController($httpClient, 'ROLE_CUSTOM', $authChecker, $tokenStorage);
 
         $request = Request::create('/api/feedback/tickets', 'GET');
         $controller->proxy('tickets', $request);
