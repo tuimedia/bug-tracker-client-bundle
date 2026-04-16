@@ -46,7 +46,7 @@ class FeedbackController extends AbstractController
         $user = $this->getUser();
         $payload['reporterEmail'] = $user->getUserIdentifier();
 
-        $response = $this->client->submitTicket($payload);
+        $response = $this->client->post('/api/tickets', $payload);
 
         return new JsonResponse(
             $response->toArray(throw: false),
@@ -69,7 +69,7 @@ class FeedbackController extends AbstractController
             return new JsonResponse(['error' => 'Invalid JSON body'], Response::HTTP_BAD_REQUEST);
         }
 
-        $response = $this->client->presignScreenshot($payload);
+        $response = $this->client->post('/api/attachments/presign', $payload);
 
         return new JsonResponse(
             $response->toArray(throw: false),

@@ -15,38 +15,13 @@ class BugTrackerClient
     }
 
     /**
-     * Submit a ticket to the tracker.
-     *
-     * $payload is the merged body (frontend fields + server-side enrichment).
-     * The tracker's own validation is the schema authority — this method does
-     * no field-level validation so new optional tracker fields pass through
-     * without a bundle update.
-     *
      * @param array<string, mixed> $payload
      */
-    public function submitTicket(array $payload): ResponseInterface
+    public function post(string $path, array $payload): ResponseInterface
     {
-        return $this->httpClient->request('POST', $this->url('/api/tickets'), [
+        return $this->httpClient->request('POST', rtrim($this->baseUrl, '/') . $path, [
             'auth_bearer' => $this->apiKey,
             'json' => $payload,
         ]);
-    }
-
-    /**
-     * Request a presigned S3 PUT URL for a screenshot upload.
-     *
-     * @param array<string, mixed> $payload
-     */
-    public function presignScreenshot(array $payload): ResponseInterface
-    {
-        return $this->httpClient->request('POST', $this->url('/api/attachments/presign'), [
-            'auth_bearer' => $this->apiKey,
-            'json' => $payload,
-        ]);
-    }
-
-    private function url(string $path): string
-    {
-        return rtrim($this->baseUrl, '/') . $path;
     }
 }
