@@ -29,10 +29,11 @@ class BugTrackerProxyController extends AbstractController
                 return new JsonResponse(['error' => 'Invalid JSON body'], Response::HTTP_BAD_REQUEST);
             }
 
-            // Strip reporterEmail — must come from the authenticated session to
-            // prevent spoofing. Everything else passes through as-is.
-            unset($payload['reporterEmail']);
-            $payload['reporterEmail'] = $this->getUser()->getUserIdentifier();
+            // Only override reporterEmail if the caller sent it — prevents spoofing
+            // without injecting the field into endpoints that don't expect it.
+            if (array_key_exists('reporterEmail', $payload)) {
+                $payload['reporterEmail'] = $this->getUser()->getUserIdentifier();
+            }
 
             $options['json'] = $payload;
         }

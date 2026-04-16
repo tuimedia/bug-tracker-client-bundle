@@ -68,6 +68,24 @@ class BugTrackerProxyControllerTest extends TestCase
         $this->assertSame('Something is broken', $captured['body']['title']);
     }
 
+    public function testReporterEmailNotInjectedWhenAbsent(): void
+    {
+        $captured = [];
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use (&$captured) {
+            $captured = json_decode($options['body'], true);
+            return new MockResponse('{"status":"ok"}', ['http_code' => 201]);
+        });
+
+        $request = Request::create('/api/feedback/attachments/presign', 'POST', content: json_encode([
+            'contentType' => 'image/png',
+            'filename' => 'screenshot.png',
+        ]));
+
+        $this->makeController($httpClient)->proxy('attachments/presign', $request);
+
+        $this->assertArrayNotHasKey('reporterEmail', $captured);
+    }
+
     public function testPostPassesOtherFieldsThrough(): void
     {
         $captured = [];
