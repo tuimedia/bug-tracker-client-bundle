@@ -8,7 +8,7 @@ use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Tui\BugTrackerBundle\Controller\FeedbackController;
+use Tui\BugTrackerBundle\Controller\BugTrackerProxyController;
 
 class TuiBugTrackerExtension extends Extension
 {
@@ -30,7 +30,7 @@ class TuiBugTrackerExtension extends Extension
                 'auth_bearer' => $config['api_key'],
             ]]);
 
-        $container->getDefinition(FeedbackController::class)
+        $container->getDefinition(BugTrackerProxyController::class)
             ->setArgument('$client', new Reference('tui_bug_tracker.http_client'))
             ->setArgument('$requiredRole', $config['required_role']);
     }
