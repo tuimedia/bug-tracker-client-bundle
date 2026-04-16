@@ -7,6 +7,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Tui\BugTrackerBundle\Client\BugTrackerClient;
+use Tui\BugTrackerBundle\Controller\FeedbackController;
 
 class TuiBugTrackerExtension extends Extension
 {
@@ -21,5 +22,8 @@ class TuiBugTrackerExtension extends Extension
         $container->getDefinition(BugTrackerClient::class)
             ->setArgument('$baseUrl', $config['base_url'])
             ->setArgument('$apiKey', $config['api_key']);
+
+        $container->getDefinition(FeedbackController::class)
+            ->setArgument('$requiredRole', $config['required_role']);
     }
 }
