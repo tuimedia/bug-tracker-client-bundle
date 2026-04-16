@@ -15,6 +15,7 @@ class Configuration implements ConfigurationInterface
             ->children()
                 ->scalarNode('base_url')->isRequired()->cannotBeEmpty()->end()
                 ->scalarNode('api_key')->isRequired()->cannotBeEmpty()->end()
+                ->scalarNode('required_role')->defaultValue('ROLE_FEEDBACK')->cannotBeEmpty()->end()
             ->end();
 
         return $treeBuilder;
