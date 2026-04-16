@@ -1,0 +1,4 @@
+tui_bug_tracker:
+    base_url: '%env(BUG_TRACKER_BASE_URL)%'
+    api_key: '%env(BUG_TRACKER_API_KEY)%'
+    # required_role: ROLE_FEEDBACK  # default — override if your app uses a different role

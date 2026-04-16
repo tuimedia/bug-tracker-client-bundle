@@ -1,0 +1,17 @@
+{
+    "bundles": {
+        "Tui\\BugTrackerBundle\\TuiBugTrackerBundle": ["all"]
+    },
+    "copy-from-recipe": {
+        "config/": "%CONFIG_DIR%/"
+    },
+    "env": {
+        "BUG_TRACKER_BASE_URL": {
+            "value": "https://bugs.example.com",
+            "comment_line": "Bug Tracker"
+        },
+        "BUG_TRACKER_API_KEY": {
+            "value": ""
+        }
+    }
+}

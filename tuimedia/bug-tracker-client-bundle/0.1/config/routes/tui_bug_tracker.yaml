@@ -1,0 +1,3 @@
+tui_bug_tracker:
+    resource: '@TuiBugTrackerBundle/Resources/config/routes.yaml'
+    prefix: /api/feedback
