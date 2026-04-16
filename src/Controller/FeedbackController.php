@@ -38,8 +38,10 @@ class FeedbackController extends AbstractController
             return new JsonResponse(['error' => 'Invalid JSON body'], Response::HTTP_BAD_REQUEST);
         }
 
-        // Strip fields that must come from the server to prevent identity spoofing.
-        unset($payload['reporterEmail'], $payload['reporterUserIdInSource']);
+        // Strip only the field the server must own — prevents the caller spoofing
+        // their email address. All other fields (including reporterUserIdInSource,
+        // which the consumer app knows from its own session) pass through as-is.
+        unset($payload['reporterEmail']);
 
         $user = $this->getUser();
         $payload['reporterEmail'] = $user->getUserIdentifier();
@@ -67,10 +69,7 @@ class FeedbackController extends AbstractController
             return new JsonResponse(['error' => 'Invalid JSON body'], Response::HTTP_BAD_REQUEST);
         }
 
-        $response = $this->client->presignScreenshot(
-            $payload['contentType'] ?? '',
-            $payload['filename'] ?? '',
-        );
+        $response = $this->client->presignScreenshot($payload);
 
         return new JsonResponse(
             $response->toArray(throw: false),

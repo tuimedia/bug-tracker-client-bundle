@@ -34,15 +34,14 @@ class BugTrackerClient
 
     /**
      * Request a presigned S3 PUT URL for a screenshot upload.
+     *
+     * @param array<string, mixed> $payload
      */
-    public function presignScreenshot(string $contentType, string $filename): ResponseInterface
+    public function presignScreenshot(array $payload): ResponseInterface
     {
         return $this->httpClient->request('POST', $this->url('/api/attachments/presign'), [
             'auth_bearer' => $this->apiKey,
-            'json' => [
-                'contentType' => $contentType,
-                'filename' => $filename,
-            ],
+            'json' => $payload,
         ]);
     }
 
