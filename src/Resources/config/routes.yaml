@@ -1,3 +1,6 @@
-tui_bug_tracker_controllers:
-    resource: '../../Controller/'
-    type: attribute
+tui_bug_tracker_proxy:
+    path: /{path}
+    controller: Tui\BugTrackerBundle\Controller\BugTrackerProxyController::proxy
+    requirements:
+        path: .+
+    methods: [GET, POST, PUT, PATCH, DELETE]
