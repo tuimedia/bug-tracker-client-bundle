@@ -47,10 +47,12 @@ class BugTrackerProxyController
         $response = $this->client->request($request->getMethod(), '/api/' . $path, $options);
 
         $content = $response->getContent(throw: false);
+        $decoded = $content !== '' ? json_decode($content, true) : null;
 
-        return new JsonResponse(
-            $content !== '' ? json_decode($content, true) : null,
-            $response->getStatusCode(),
-        );
+        if ($decoded === null && $content !== '') {
+            return new Response($content, $response->getStatusCode(), ['Content-Type' => 'text/html']);
+        }
+
+        return new JsonResponse($decoded, $response->getStatusCode());
     }
 }
