@@ -26,7 +26,14 @@ class BugTrackerProxyController
             throw new AccessDeniedException();
         }
 
-        $options = ['query' => $request->query->all()];
+        $query = $request->query->all();
+
+        // Override reporterEmail in query string for GET requests — prevents spoofing.
+        if (array_key_exists('reporterEmail', $query)) {
+            $query['reporterEmail'] = $this->tokenStorage->getToken()?->getUser()?->getUserIdentifier();
+        }
+
+        $options = ['query' => $query];
 
         if (in_array($request->getMethod(), ['POST', 'PUT', 'PATCH'], true)) {
             try {
