@@ -33,7 +33,7 @@ class BugTrackerProxyController
             $query['reporterEmail'] = $this->tokenStorage->getToken()?->getUser()?->getUserIdentifier();
         }
 
-        $options = ['query' => $query];
+        $options = ['query' => $query, 'max_redirects' => 0];
 
         if (in_array($request->getMethod(), ['POST', 'PUT', 'PATCH'], true)) {
             try {
@@ -53,13 +53,21 @@ class BugTrackerProxyController
 
         $response = $this->client->request($request->getMethod(), '/api/' . $path, $options);
 
+        $statusCode = $response->getStatusCode();
+
+        // Pass redirects through — lets the browser follow presigned S3 URLs directly.
+        if ($statusCode >= 300 && $statusCode < 400) {
+            $location = $response->getHeaders(throw: false)['location'][0] ?? null;
+            return new Response(null, $statusCode, array_filter(['Location' => $location]));
+        }
+
         $content = $response->getContent(throw: false);
         $decoded = $content !== '' ? json_decode($content, true) : null;
 
         if ($decoded === null && $content !== '') {
-            return new Response($content, $response->getStatusCode(), ['Content-Type' => 'text/html']);
+            return new Response($content, $statusCode, ['Content-Type' => 'text/html']);
         }
 
-        return new JsonResponse($decoded, $response->getStatusCode());
+        return new JsonResponse($decoded, $statusCode);
     }
 }
