@@ -20,7 +20,7 @@ class BugTrackerProxyController
     ) {
     }
 
-    public function proxy(string $path, Request $request): JsonResponse
+    public function proxy(string $path, Request $request): Response
     {
         if (!$this->authorizationChecker->isGranted($this->requiredRole)) {
             throw new AccessDeniedException();
