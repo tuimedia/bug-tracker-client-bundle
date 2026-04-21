@@ -9,10 +9,10 @@ Symfony bundle for consumer projects to proxy bug reports to a bug tracker insta
 The bundle registers a catch-all proxy route under a configurable prefix (default `/api/feedback`). Any request to `/api/feedback/{path}` is forwarded to the tracker at `/api/{path}` with the API key attached. On write requests (POST/PUT/PATCH), `reporterEmail` is stripped from the incoming payload and replaced with the authenticated user's identifier — everything else passes through as-is so new tracker fields work without a bundle update.
 
 ```
-Browser → POST /api/feedback/tickets
+Browser → POST /api/feedback/public/tickets
             ↓ (ROLE_FEEDBACK check)
             ↓ strip reporterEmail, inject from session
-          POST /api/tickets  →  bug tracker
+          POST /api/public/tickets  →  bug tracker
 ```
 
 ## Installation
@@ -82,8 +82,10 @@ tui_bug_tracker:
 
 | Method | Consumer path | Forwards to |
 |--------|--------------|-------------|
-| POST | `/api/feedback/tickets` | `POST /api/tickets` |
-| POST | `/api/feedback/attachments/presign` | `POST /api/attachments/presign` |
+| POST | `/api/feedback/public/tickets` | `POST /api/public/tickets` |
+| GET | `/api/feedback/public/tickets/mine[/{id}]` | `GET /api/public/tickets/mine[/{id}]` |
+| POST | `/api/feedback/public/attachments/presign` | `POST /api/public/attachments/presign` |
+| GET | `/api/feedback/public/attachments/mine/{id}` | `GET /api/public/attachments/mine/{id}` |
 | GET, DELETE, … | `/api/feedback/{anything}` | `/api/{anything}` |
 
 The prefix is set at import time — no bundle config needed.
