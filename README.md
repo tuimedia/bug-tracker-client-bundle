@@ -6,7 +6,7 @@ Symfony bundle for consumer projects to proxy bug reports to a bug tracker insta
 
 ## How it works
 
-The bundle registers a catch-all proxy route under a configurable prefix (default `/api/feedback`). Any request to `/api/feedback/{path}` is forwarded to the tracker at `/api/{path}` with the API key attached. On write requests (POST/PUT/PATCH), `reporterEmail` is stripped from the incoming payload and replaced with the authenticated user's identifier — everything else passes through as-is so new tracker fields work without a bundle update.
+The bundle registers a catch-all proxy route under a configurable prefix (default `/api/feedback`). A request to `/api/feedback/{path}` is forwarded to the tracker at `/api/{path}` with the API key attached, but only when `{path}` falls under `public/tickets` or `public/attachments` — anything else gets a 404 without reaching the tracker. On write requests (POST/PUT/PATCH), `reporterEmail` is stripped from the incoming payload and replaced with the authenticated user's identifier — everything else passes through as-is so new tracker fields work without a bundle update.
 
 ```
 Browser → POST /api/feedback/public/tickets
@@ -86,14 +86,17 @@ tui_bug_tracker:
 | GET | `/api/feedback/public/tickets/mine[/{id}]` | `GET /api/public/tickets/mine[/{id}]` |
 | POST | `/api/feedback/public/attachments/presign` | `POST /api/public/attachments/presign` |
 | GET | `/api/feedback/public/attachments/mine/{id}` | `GET /api/public/attachments/mine/{id}` |
-| GET, DELETE, … | `/api/feedback/{anything}` | `/api/{anything}` |
+| GET, POST, PUT, PATCH, DELETE | `/api/feedback/public/tickets/…`, `/api/feedback/public/attachments/…` | `/api/public/tickets/…`, `/api/public/attachments/…` |
+
+Anything outside `public/tickets` and `public/attachments` is rejected with a 404 before it reaches the tracker.
 
 The prefix is set at import time — no bundle config needed.
 
 ## Security
 
 - All routes require the configured role (`ROLE_FEEDBACK` by default).
-- On write requests, if `reporterEmail` is present in the payload it is overwritten with `$user->getUserIdentifier()` from the authenticated session. The caller cannot spoof it.
+- Only paths under `public/tickets` and `public/attachments` are forwarded; anything else gets a 404 before it reaches the tracker.
+- `GET public/tickets/mine` and `POST public/tickets` always carry the authenticated user's `reporterEmail`, so a caller can't drop the field to read or file tickets as someone else. Elsewhere, if `reporterEmail` is present in the payload it's overwritten with `$user->getUserIdentifier()` from the session — the caller cannot spoof it.
 - The API key is injected server-side via `Authorization: Bearer`; it never appears in responses or logs.
 
 ## Requirements
