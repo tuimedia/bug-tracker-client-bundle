@@ -44,20 +44,20 @@ class BugTrackerProxyControllerTest extends TestCase
             return new MockResponse('{"status":"ok"}', ['http_code' => 201]);
         });
 
-        $request = Request::create('/api/feedback/tickets', 'POST', content: json_encode([
+        $request = Request::create('/api/feedback/public/tickets', 'POST', content: json_encode([
             'title' => 'Something is broken',
             'reporterEmail' => 'spoofed@evil.com',
         ]));
 
         $response = $this->makeController($httpClient, userEmail: 'real@example.com')
-            ->proxy('tickets', $request);
+            ->proxy('public/tickets', $request);
 
         $this->assertSame(201, $response->getStatusCode());
         $this->assertSame('real@example.com', $captured['body']['reporterEmail']);
         $this->assertSame('Something is broken', $captured['body']['title']);
     }
 
-    public function testReporterEmailNotInjectedWhenAbsent(): void
+    public function testReporterEmailAlwaysInjectedOnTicketCreation(): void
     {
         $captured = [];
         $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use (&$captured) {
@@ -65,14 +65,87 @@ class BugTrackerProxyControllerTest extends TestCase
             return new MockResponse('{"status":"ok"}', ['http_code' => 201]);
         });
 
-        $request = Request::create('/api/feedback/attachments/presign', 'POST', content: json_encode([
+        $request = Request::create('/api/feedback/public/tickets', 'POST', content: json_encode([
+            'title' => 'Something is broken',
+        ]));
+
+        $this->makeController($httpClient, userEmail: 'real@example.com')
+            ->proxy('public/tickets', $request);
+
+        $this->assertSame('real@example.com', $captured['reporterEmail']);
+    }
+
+    public function testReporterEmailNotInjectedWhenAbsentOnOtherEndpoints(): void
+    {
+        $captured = [];
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use (&$captured) {
+            $captured = json_decode($options['body'], true);
+            return new MockResponse('{"status":"ok"}', ['http_code' => 201]);
+        });
+
+        $request = Request::create('/api/feedback/public/attachments/presign', 'POST', content: json_encode([
             'contentType' => 'image/png',
             'filename' => 'screenshot.png',
         ]));
 
-        $this->makeController($httpClient)->proxy('attachments/presign', $request);
+        $this->makeController($httpClient)->proxy('public/attachments/presign', $request);
 
         $this->assertArrayNotHasKey('reporterEmail', $captured);
+    }
+
+    public function testReporterEmailAlwaysInjectedOnTicketsMine(): void
+    {
+        $captured = [];
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use (&$captured) {
+            $captured = ['url' => $url];
+            return new MockResponse('{"items":[]}', ['http_code' => 200]);
+        });
+
+        $request = Request::create('/api/feedback/public/tickets/mine', 'GET');
+
+        $this->makeController($httpClient, userEmail: 'real@example.com')
+            ->proxy('public/tickets/mine', $request);
+
+        $this->assertStringContainsString('reporterEmail=real@example.com', $captured['url']);
+    }
+
+    public function testReporterEmailSpoofOverriddenOnTicketsMine(): void
+    {
+        $captured = [];
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use (&$captured) {
+            $captured = ['url' => $url];
+            return new MockResponse('{"items":[]}', ['http_code' => 200]);
+        });
+
+        $request = Request::create('/api/feedback/public/tickets/mine', 'GET', ['reporterEmail' => 'spoofed@evil.com']);
+
+        $this->makeController($httpClient, userEmail: 'real@example.com')
+            ->proxy('public/tickets/mine', $request);
+
+        $this->assertStringContainsString('reporterEmail=real@example.com', $captured['url']);
+        $this->assertStringNotContainsString('spoofed', $captured['url']);
+    }
+
+    public function testPathsOutsideAllowlistReturn404(): void
+    {
+        $httpClient = new MockHttpClient();
+
+        $request = Request::create('/api/feedback/../admin/users', 'GET');
+
+        $response = $this->makeController($httpClient)->proxy('../admin/users', $request);
+
+        $this->assertSame(404, $response->getStatusCode());
+    }
+
+    public function testPathOutsideTicketsAndAttachmentsReturns404(): void
+    {
+        $httpClient = new MockHttpClient();
+
+        $request = Request::create('/api/feedback/projects', 'GET');
+
+        $response = $this->makeController($httpClient)->proxy('projects', $request);
+
+        $this->assertSame(404, $response->getStatusCode());
     }
 
     public function testPostPassesOtherFieldsThrough(): void
@@ -83,7 +156,7 @@ class BugTrackerProxyControllerTest extends TestCase
             return new MockResponse('{"status":"ok"}', ['http_code' => 201]);
         });
 
-        $request = Request::create('/api/feedback/tickets', 'POST', content: json_encode([
+        $request = Request::create('/api/feedback/public/tickets', 'POST', content: json_encode([
             'title' => 'Bug',
             'stepsToReproduce' => 'Click the button',
             'submittedUrl' => 'https://app.example.com/page',
@@ -93,7 +166,7 @@ class BugTrackerProxyControllerTest extends TestCase
             'unknownFutureField' => 'passes through',
         ]));
 
-        $this->makeController($httpClient)->proxy('tickets', $request);
+        $this->makeController($httpClient)->proxy('public/tickets', $request);
 
         $this->assertSame('Bug', $captured['title']);
         $this->assertSame('Click the button', $captured['stepsToReproduce']);
@@ -110,9 +183,9 @@ class BugTrackerProxyControllerTest extends TestCase
             return new MockResponse('{"items":[]}', ['http_code' => 200]);
         });
 
-        $request = Request::create('/api/feedback/tickets', 'GET', ['status' => 'open', 'page' => '2']);
+        $request = Request::create('/api/feedback/public/tickets', 'GET', ['status' => 'open', 'page' => '2']);
 
-        $this->makeController($httpClient)->proxy('tickets', $request);
+        $this->makeController($httpClient)->proxy('public/tickets', $request);
 
         $this->assertSame('GET', $captured['method']);
         $this->assertStringContainsString('status=open', $captured['url']);
@@ -128,9 +201,9 @@ class BugTrackerProxyControllerTest extends TestCase
             return new MockResponse('', ['http_code' => 204]);
         });
 
-        $request = Request::create('/api/feedback/tickets/42', 'DELETE');
+        $request = Request::create('/api/feedback/public/tickets/42', 'DELETE');
 
-        $response = $this->makeController($httpClient)->proxy('tickets/42', $request);
+        $response = $this->makeController($httpClient)->proxy('public/tickets/42', $request);
 
         $this->assertSame('DELETE', $captured['method']);
         $this->assertNull($captured['body']);
@@ -143,9 +216,9 @@ class BugTrackerProxyControllerTest extends TestCase
             new MockResponse('{"errors":{"title":"This value should not be blank."}}', ['http_code' => 422]),
         ]);
 
-        $request = Request::create('/api/feedback/tickets', 'POST', content: json_encode(['title' => '']));
+        $request = Request::create('/api/feedback/public/tickets', 'POST', content: json_encode(['title' => '']));
 
-        $response = $this->makeController($httpClient)->proxy('tickets', $request);
+        $response = $this->makeController($httpClient)->proxy('public/tickets', $request);
 
         $this->assertSame(422, $response->getStatusCode());
         $body = json_decode($response->getContent(), true);
@@ -158,9 +231,9 @@ class BugTrackerProxyControllerTest extends TestCase
             new MockResponse('', ['http_code' => 204]),
         ]);
 
-        $request = Request::create('/api/feedback/tickets/42', 'DELETE');
+        $request = Request::create('/api/feedback/public/tickets/42', 'DELETE');
 
-        $response = $this->makeController($httpClient)->proxy('tickets/42', $request);
+        $response = $this->makeController($httpClient)->proxy('public/tickets/42', $request);
 
         $this->assertSame(204, $response->getStatusCode());
     }
@@ -169,9 +242,9 @@ class BugTrackerProxyControllerTest extends TestCase
     {
         $httpClient = new MockHttpClient();
 
-        $request = Request::create('/api/feedback/tickets', 'POST', content: 'not json {{{');
+        $request = Request::create('/api/feedback/public/tickets', 'POST', content: 'not json {{{');
 
-        $response = $this->makeController($httpClient)->proxy('tickets', $request);
+        $response = $this->makeController($httpClient)->proxy('public/tickets', $request);
 
         $this->assertSame(400, $response->getStatusCode());
     }
@@ -194,8 +267,8 @@ class BugTrackerProxyControllerTest extends TestCase
         $httpClient = new MockHttpClient([new MockResponse('{}', ['http_code' => 200])]);
         $controller = new BugTrackerProxyController($httpClient, 'ROLE_CUSTOM', $authChecker, $tokenStorage);
 
-        $request = Request::create('/api/feedback/tickets', 'GET');
-        $controller->proxy('tickets', $request);
+        $request = Request::create('/api/feedback/public/tickets', 'GET');
+        $controller->proxy('public/tickets', $request);
     }
 
     public function testAccessDeniedWhenRoleMissing(): void
@@ -203,8 +276,8 @@ class BugTrackerProxyControllerTest extends TestCase
         $this->expectException(AccessDeniedException::class);
 
         $httpClient = new MockHttpClient();
-        $request = Request::create('/api/feedback/tickets', 'GET');
+        $request = Request::create('/api/feedback/public/tickets', 'GET');
 
-        $this->makeController($httpClient, isGranted: false)->proxy('tickets', $request);
+        $this->makeController($httpClient, isGranted: false)->proxy('public/tickets', $request);
     }
 }
