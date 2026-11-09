@@ -2,7 +2,7 @@
     "name": "tuimedia/bug-tracker-client-bundle",
     "description": "Symfony bundle for consumer projects to submit bug reports to the Tui bug tracker",
     "type": "symfony-bundle",
-    "license": "proprietary",
+    "license": "MIT",
     "require": {
         "php": ">=8.3",
         "symfony/framework-bundle": "^6.4|^7.0",
